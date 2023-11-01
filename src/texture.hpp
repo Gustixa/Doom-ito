@@ -3,12 +3,12 @@
 #include "include.hpp"
 
 struct Texture {
-	vector<vector<vec3>> data;
+	vector<vector<uvec4>> data;
 	int width, height;
 
 	Texture();
 	Texture(const char* imagePath);
 
 	void loadImage(const char* imagePath);
-	vec3 getColor(const vec2& uv) const;
+	uvec4 getColor(const double& u, const double& v) const;
 };

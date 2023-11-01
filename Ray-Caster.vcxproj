@@ -144,7 +144,7 @@
     <ClCompile Include="src\texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\stb_image.h" />
+    <ClInclude Include="src\stb_image.hpp" />
     <ClInclude Include="src\include.hpp" />
     <ClInclude Include="src\texture.hpp" />
   </ItemGroup>

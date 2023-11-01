@@ -29,7 +29,7 @@
     <ClInclude Include="src\texture.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\stb_image.h">
+    <ClInclude Include="src\stb_image.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

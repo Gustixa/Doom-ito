@@ -4,55 +4,127 @@
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 
-array<bool, 5> input = array<bool, 5>();
+array<bool, 9> input = array<bool, 9>();
 
-const uint16_t RESX = 1440;
-const uint16_t RESY = 810;
-const uint8_t  SUBSAMPLE = 3;
+const float WALK_SPEED = 50.0f;
+const float SPRINT_SPEED = WALK_SPEED * 2.0f;
+const float TURN_SPEED = 40.0f;
 
-double update_time = 0.2;
+const uint16_t WIDTH = 16;
+const uint16_t HEIGHT = 11;
+const uint16_t BLOCK = 50;
+const uint16_t RESX = WIDTH * BLOCK;
+const uint16_t RESY = HEIGHT * BLOCK;
+
+const uint16_t HALF_RESY = RESY / 2;
+const uint16_t HALF_BLOCK = BLOCK / 2;
+
+double update_time = 0.25;
 double window_time = 0;
 double delta_time = 0;
 double run_time = 0;
 clock_t last_time = 0;
 clock_t current_time = 0;
 
-vec2  player_pos   = vec2(2.0f);
 float player_angle = 0.0f;
 
-map<string, Texture> texture_map;
-
-vector<vector<int>> player_map = {
-		{1,1,1,1,1,1,1,1,1,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,1,1,0,1,0,0,1},
-		{1,0,0,1,0,0,1,0,0,1},
-		{1,0,0,1,0,0,1,0,0,1},
-		{1,0,0,1,0,1,1,0,0,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,0,0,0,0,0,0,0,0,1},
-		{1,1,1,1,1,1,1,1,1,1},
+vector<vector<string>> player_map = {
+	{ W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W2, W2, W1 },
+	{ W3, OO, OO, OO, OO, OO, OO, OO, OO, OO, OO, OO, W4, OO, OO, W3 },
+	{ W1, OO, OO, W1, W2, W2, W1, W2, W2, W1, OO, OO, W1, OO, OO, W1 },
+	{ W3, OO, OO, W3, OO, OO, OO, OO, OO, W3, OO, OO, OO, OO, OO, W4 },
+	{ W1, OO, OO, W1, W2, W2, W1, OO, OO, W1, W2, W2, W1, OO, OO, W1 },
+	{ W3, OO, OO, OO, OO, OO, W3, OO, OO, OO, OO, OO, W3, OO, OO, W4 },
+	{ W1, W2, W2, W1, OO, OO, W1, W2, W2, W1, OO, OO, W1, OO, OO, W1 },
+	{ W3, OO, OO, OO, OO, OO, W3, OO, OO, W3, OO, OO, OO, OO, OO, W4 },
+	{ W1, OO, OO, W1, W2, W2, W1, OO, OO, W1, OO, OO, W1, W4, W4, W1 },
+	{ W3, OO, OO, OO, OO, OO, OO, OO, OO, W3, OO, OO, OO, OO, OO, W5 },
+	{ W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W4, W4, W1 }
 };
+vec2  player_pos = vec2(BLOCK + HALF_BLOCK);
+map<string, Texture> texture_map;
 
 void init() {
 	SDL_Init(SDL_INIT_VIDEO);
-	window = SDL_CreateWindow("Samuel | 60.00 FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESX, RESY, SDL_WINDOW_SHOWN);
+	window = SDL_CreateWindow("Samuel | 60.00 FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESX + RESY, RESY, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 }
 
-void renderPixel(const uint16_t& i_x, const uint16_t& i_y, const vec3& i_color) {
-	SDL_SetRenderDrawColor(renderer, Uint8(i_color.r * 255.f), Uint8(i_color.g * 255.f), Uint8(i_color.b * 255.f), 255);
-	//for (int x = 0; x < SUBSAMPLE - 1; x++)
-		//for (int y = 0; y < SUBSAMPLE - 1; y++)
-			SDL_RenderDrawPoint(renderer, i_x, i_y);
+void renderMinimap(const int& x, const int& y, const string& mapHit) {
+	for (int cx = x; cx < x + BLOCK; cx++) {
+		for (int cy = y; cy < y + BLOCK; cy++) {
+			int tx = ((cx - x) * 128) / BLOCK;
+			int ty = ((cy - y) * 128) / BLOCK;
+
+			vec3 c = texture_map[mapHit].getColor(tx, ty);
+			SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
+			SDL_RenderDrawPoint(renderer, cx, cy);
+		}
+	}
 }
 
+void renderLine(const int& x, const float& h, tuple<float, string, int> i_hit) {
+	float start = RESY / 2.0f - h / 2.0f;
+	float end = start + h;
+
+	for (int y = start; y < end; y++) {
+		int ty = (y - start) * 128 / h;
+		uvec4 c = texture_map[get<1>(i_hit)].getColor(get<2>(i_hit), ty);
+		SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+		SDL_RenderDrawPoint(renderer, (RESX + RESY) - x, y);
+	}
+}
+
+
 void movePlayer(const int& i_fwd, const int& i_side) {
-	player_pos.x += i_fwd * cos(player_angle * DEG_RAD) * delta_time;
-	player_pos.y += i_fwd * sin(player_angle * DEG_RAD) * delta_time;
-	player_pos.x += i_side * cos((player_angle + 90.f) * DEG_RAD) * delta_time;
-	player_pos.y += i_side * sin((player_angle + 90.f) * DEG_RAD) * delta_time;
+	if (input[KEY_SHIFT]) {
+		player_pos.x += i_fwd * SPRINT_SPEED * cos(player_angle * DEG_RAD) * delta_time;
+		player_pos.y += i_fwd * SPRINT_SPEED * sin(player_angle * DEG_RAD) * delta_time;
+		player_pos.x += i_side * SPRINT_SPEED * cos((player_angle + 90.f) * DEG_RAD) * delta_time;
+		player_pos.y += i_side * SPRINT_SPEED * sin((player_angle + 90.f) * DEG_RAD) * delta_time;
+	}
+	else {
+		player_pos.x += i_fwd * WALK_SPEED * cos(player_angle * DEG_RAD) * delta_time;
+		player_pos.y += i_fwd * WALK_SPEED * sin(player_angle * DEG_RAD) * delta_time;
+		player_pos.x += i_side * WALK_SPEED * cos((player_angle + 90.f) * DEG_RAD) * delta_time;
+		player_pos.y += i_side * WALK_SPEED * sin((player_angle + 90.f) * DEG_RAD) * delta_time;
+	}
+}
+
+tuple<float, string, int> rayCast(const float& i_angle) {
+	float d = 0;
+	string mapHit;
+	int tx;
+
+	while (true) {
+		int x = static_cast<int>(player_pos.x + d * cos(i_angle * DEG_RAD));
+		int y = static_cast<int>(player_pos.y + d * sin(i_angle * DEG_RAD));
+
+		int i = x / BLOCK;
+		int j = y / BLOCK;
+
+		if (player_map[j][i] != " ") {
+			mapHit = player_map[j][i];
+
+			int hitx = x - i * BLOCK;
+			int hity = y - j * BLOCK;
+			int maxhit;
+
+			if (hitx == 0 || hitx == BLOCK - 1) 
+				maxhit = hity;
+			else 
+				maxhit = hitx;
+
+			tx = maxhit * 128 / BLOCK;
+			break;
+		}
+
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+		SDL_RenderDrawPoint(renderer, x, y);
+
+		d += 1;
+	}
+	return make_tuple( d, mapHit, tx );
 }
 
 void render() {
@@ -78,35 +150,36 @@ void render() {
 	if (input[KEY_S]) movePlayer( -1,  0 );
 	if (input[KEY_A]) movePlayer(  0,  1 );
 	if (input[KEY_D]) movePlayer(  0, -1 );
+	if (input[KEY_L_ARROW]) player_angle -= TURN_SPEED * delta_time;
+	if (input[KEY_R_ARROW]) player_angle += TURN_SPEED * delta_time;
 
-	float ray_angle = player_angle - 30.0f;
-	for (int x = 0; x < RESX; x ++) {
-		ray_angle += x / (RESX);
-		float rayCos = cos(ray_angle * DEG_RAD);
-		float raySin = sin(ray_angle * DEG_RAD);
-		float ray_x = player_pos.x;
-		float ray_y = player_pos.y;
+	// render Minimap
+	for (int x = 0; x < RESX; x += BLOCK) {
+		for (int y = 0; y < RESY; y += BLOCK) {
+			int i = static_cast<int>(x / BLOCK);
+			int j = static_cast<int>(y / BLOCK);
 
-		int wall = 0;
-		while (wall == 0) {
-			ray_x += rayCos;
-			ray_y += raySin;
-			wall = player_map[floor(ray_y)][floor(ray_x)];
-		}
-		float distance = sqrt(pow(player_pos.x - ray_x, 2) + pow(player_pos.y - ray_y, 2));
-		uint16_t wallheight = floor((RESY / (2)) / distance);
-
-		for (int y = 0; y < RESY; y ++) {
-			if (y > 0 && y < (RESY / (2)) - wallheight) { // Floor
-				renderPixel(x, y, vec3(0.5));
-			}
-			else if (y >= (RESY / (2)) - wallheight && y < (RESY / (2)) + wallheight) { // Wall
-				renderPixel(x, y, vec3(1.0));
-			}
-			else { // Ceiling
-				renderPixel(x, y, vec3(0.0));
+			if (player_map[j][i] != " ") {
+				string mapHit;
+				mapHit = player_map[j][i];
+				uvec4 c = uvec4(255, 0, 0, 255);
+				renderMinimap(x, y, mapHit);
 			}
 		}
+	}
+
+	// render Walls
+	for (int x = 0; x < RESY; x++) {
+		double a = player_angle + 30.0 - 60.0 * x / RESY;
+		auto[dist, mapHit, tx] = rayCast(a);
+		uvec4 c = uvec4(255, 0, 0, 255);
+
+		if (dist <= 0.01) {
+			cout << "you lose";
+			player_pos = vec2(BLOCK + HALF_BLOCK);
+		}
+		float h = static_cast<float>(RESY) / dist * 50.0f;
+		renderLine(x, h, make_tuple(dist, mapHit, tx));
 	}
 
 	SDL_RenderPresent(renderer);
@@ -117,9 +190,11 @@ int main(int argc, char* argv[]) {
 	bool running = true;
 
 	// Load.png
-	texture_map["Wall"]      = Texture("./res/Wall.png");
-	texture_map["Floor"]     = Texture("./res/Floor.png");
-	texture_map["Cacodemon"] = Texture("./res/Cacodemon.png");
+	texture_map[W1] = Texture("./res/HH.png");
+	texture_map[W2] = Texture("./res/HH.png");
+	texture_map[W3] = Texture("./res/HH.png");
+	texture_map[W4] = Texture("./res/HH.png");
+	texture_map[W5] = Texture("./res/HH.png");
 
 	while (running) {
 		SDL_Event event;
@@ -134,9 +209,6 @@ int main(int argc, char* argv[]) {
 					SDL_Quit();
 					return 0;
 				}
-			}
-			else if (event.type == SDL_MOUSEMOTION) {
-				player_angle += event.motion.x * delta_time * 0.0001f;
 			}
 		}
 		render();

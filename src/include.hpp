@@ -23,9 +23,12 @@
 #include <omp.h>
 #include <ctime>
 #include <array>
+#include <tuple>
 #include <map>
 
 #include <SDL.h>
+#include <SDL_render.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/rotate_vector.hpp>
@@ -45,13 +48,12 @@ using namespace glm;
 #define INVERTED_PI float(0.31830989f)
 #define DEG_RAD     float(0.01745329f)
 
-#define W "Wall"
-#define P "Portrait"
-#define F "Flag"
-#define O "Floor"
-#define E "Enemy"
-#define S "Spawn"
-#define H "Hazard"
+#define W1 "+"
+#define W2 "-"
+#define W3 "|"
+#define W4 "*"
+#define W5 "g"
+#define OO " "
 
 enum Keys {
 	NONE,
@@ -59,20 +61,23 @@ enum Keys {
 	KEY_A,
 	KEY_S,
 	KEY_D,
-	KEY_Q,
-	KEY_E,
-	KEY_UP,
-	KEY_DOWN,
-	KEY_R,
+	KEY_L_ARROW,
+	KEY_R_ARROW,
+	KEY_SPACE,
+	KEY_SHIFT
 };
 
 inline Keys getKey(const SDL_Keycode& key) {
-	switch (key) {
-	case SDLK_w: return Keys::KEY_W;
-	case SDLK_a: return Keys::KEY_A;
-	case SDLK_s: return Keys::KEY_S;
-	case SDLK_d: return Keys::KEY_D;
-	default: return Keys::NONE;
+		switch (key) {
+		case SDLK_w: return Keys::KEY_W;
+		case SDLK_a: return Keys::KEY_A;
+		case SDLK_s: return Keys::KEY_S;
+		case SDLK_d: return Keys::KEY_D;
+		case SDLK_LEFT :  return Keys::KEY_L_ARROW;
+		case SDLK_RIGHT:  return Keys::KEY_R_ARROW;
+		case SDLK_SPACE:  return Keys::KEY_SPACE;
+		case SDLK_LSHIFT: return Keys::KEY_SHIFT;
+		default: return Keys::NONE;
 	};
 }
 

@@ -1,12 +1,12 @@
 #include "texture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb_image.hpp"
 
 Texture::Texture() {
 	width = 0;
 	height = 0;
-	data = vector<vector<vec3>>();
+	data = vector<vector<uvec4>>();
 }
 
 Texture::Texture(const char* imagePath) {
@@ -15,23 +15,24 @@ Texture::Texture(const char* imagePath) {
 
 void Texture::loadImage(const char* imagePath) {
 	int channels;
-	unsigned char* image_data = stbi_load(imagePath, &width, &height, &channels, 3);
+	unsigned char* image_data = stbi_load(imagePath, &width, &height, &channels, 4);
 
 	if (!image_data) {
 		cerr << "Error loading image." << endl;
 		exit(1);
 	}
-	vector<vector<vec3>> result;
+	vector<vector<uvec4>> result;
 
 	for (int y = 0; y < height; ++y) {
-		vector<vec3> row;
+		vector<uvec4> row;
 		for (int x = 0; x < width; ++x) {
-			int offset = (y * width + x) * 3;
+			int offset = (y * width + x) * 4;
 
-			vec3 pixel(
-				image_data[offset] / 255.0f,
-				image_data[offset + 1] / 255.0f,
-				image_data[offset + 2] / 255.0f
+			uvec4 pixel(
+				image_data[offset],
+				image_data[offset + 1],
+				image_data[offset + 2],
+				image_data[offset + 3]
 			);
 
 			row.push_back(pixel);
@@ -42,8 +43,11 @@ void Texture::loadImage(const char* imagePath) {
 	stbi_image_free(image_data);
 }
 
-vec3 Texture::getColor(const vec2& uv) const {
-	const size_t pixelX = size_t(uv.x * float(width)) % width;
-	const size_t pixelY = size_t(float(height) - uv.y * float(height)) % height;
-	return data[pixelY][pixelX];
+uvec4 Texture::getColor(const double& u, const double& v) const {
+	if (u > 0.0f && u < 1.0f && v > 0.0f && v < 0.0f) {
+		const size_t pixelX = size_t(u * float(width)) % width;
+		const size_t pixelY = size_t(float(height) - v * float(height)) % height;
+		return data[pixelY][pixelX];
+	}
+	return uvec4(255, 0, 255, 255);
 }
