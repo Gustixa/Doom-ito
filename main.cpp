@@ -68,7 +68,7 @@ void renderLine(const int& x, const float& h, const string& i_mapHit, const int&
 	float end = start + h;
 
 	for (int y = start; y < end; y++) {
-		const float x_coords = float(i_screen_x) / float(HALF_RESY * 0.5);
+		const float x_coords = float(i_screen_x) / float(HALF_RESY) * 5.6f;
 		const float y_coords = mapRange(y, start, end, 0.f, 1.f);
 		uvec4 c = texture_map[i_mapHit].getColor(x_coords, y_coords);
 		SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
@@ -111,12 +111,12 @@ tuple<float, string, int> rayCast(const float& i_angle) {
 			int hity = y - j * BLOCK;
 			int maxhit;
 
-			if (hitx == 0 || hitx == BLOCK - 1) 
+			if (hitx == 0 || hitx == BLOCK - 1)
 				maxhit = hity;
 			else 
 				maxhit = hitx;
 
-			tx = maxhit * 128 / BLOCK;
+			tx = maxhit;
 			break;
 		}
 
