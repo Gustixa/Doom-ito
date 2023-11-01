@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
 	texture_map[W1] = Texture("./res/Wall.png");
 	texture_map[W2] = Texture("./res/HH.png");
 	texture_map[W3] = Texture("./res/SS.png");
-	texture_map[W4] = Texture("./res/HH.png");
+	texture_map[W4] = Texture("./res/Cacodemon.png");
 	texture_map[W5] = Texture("./res/HH.png");
 
 	while (running) {
