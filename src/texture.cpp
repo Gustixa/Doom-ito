@@ -44,9 +44,9 @@ void Texture::loadImage(const char* imagePath) {
 }
 
 uvec4 Texture::getColor(const double& u, const double& v) const {
-	if (u > 0.0f && u < 1.0f && v > 0.0f && v < 0.0f) {
+	if (u >= 0.0f && u <= 1.0f && v >= 0.0f && v <= 1.0f) {
 		const size_t pixelX = size_t(u * float(width)) % width;
-		const size_t pixelY = size_t(float(height) - v * float(height)) % height;
+		const size_t pixelY = size_t(v * float(height)) % height;
 		return data[pixelY][pixelX];
 	}
 	return uvec4(255, 0, 255, 255);

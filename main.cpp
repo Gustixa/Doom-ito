@@ -53,8 +53,8 @@ void init() {
 void renderMinimap(const int& x, const int& y, const string& mapHit) {
 	for (int cx = x; cx < x + BLOCK; cx++) {
 		for (int cy = y; cy < y + BLOCK; cy++) {
-			int tx = ((cx - x) * 128) / BLOCK;
-			int ty = ((cy - y) * 128) / BLOCK;
+			float tx = (float(cx - x) ) / float(BLOCK);
+			float ty = (float(cy - y) ) / float(BLOCK);
 
 			vec3 c = texture_map[mapHit].getColor(tx, ty);
 			SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
@@ -63,14 +63,15 @@ void renderMinimap(const int& x, const int& y, const string& mapHit) {
 	}
 }
 
-void renderLine(const int& x, const float& h, tuple<float, string, int> i_hit) {
-	float start = RESY / 2.0f - h / 2.0f;
+void renderLine(const int& x, const float& h, const string& i_mapHit, const int& i_screen_x) {
+	float start = HALF_RESY - h / 2.0f;
 	float end = start + h;
 
 	for (int y = start; y < end; y++) {
-		int ty = (y - start) * 128 / h;
-		uvec4 c = texture_map[get<1>(i_hit)].getColor(get<2>(i_hit), ty);
-		SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, c.a);
+		const float x_coords = float(i_screen_x) / float(HALF_RESY * 0.5);
+		const float y_coords = mapRange(y, start, end, 0.f, 1.f);
+		uvec4 c = texture_map[i_mapHit].getColor(x_coords, y_coords);
+		SDL_SetRenderDrawColor(renderer, c.r, c.g, c.b, 255);
 		SDL_RenderDrawPoint(renderer, (RESX + RESY) - x, y);
 	}
 }
@@ -148,8 +149,8 @@ void render() {
 
 	if (input[KEY_W]) movePlayer(  1,  0 );
 	if (input[KEY_S]) movePlayer( -1,  0 );
-	if (input[KEY_A]) movePlayer(  0,  1 );
-	if (input[KEY_D]) movePlayer(  0, -1 );
+	if (input[KEY_A]) movePlayer(  0, -1 );
+	if (input[KEY_D]) movePlayer(  0,  1 );
 	if (input[KEY_L_ARROW]) player_angle -= TURN_SPEED * delta_time;
 	if (input[KEY_R_ARROW]) player_angle += TURN_SPEED * delta_time;
 
@@ -179,7 +180,7 @@ void render() {
 			player_pos = vec2(BLOCK + HALF_BLOCK);
 		}
 		float h = static_cast<float>(RESY) / dist * 50.0f;
-		renderLine(x, h, make_tuple(dist, mapHit, tx));
+		renderLine(x, h, mapHit, tx);
 	}
 
 	SDL_RenderPresent(renderer);
@@ -190,9 +191,9 @@ int main(int argc, char* argv[]) {
 	bool running = true;
 
 	// Load.png
-	texture_map[W1] = Texture("./res/HH.png");
+	texture_map[W1] = Texture("./res/Wall.png");
 	texture_map[W2] = Texture("./res/HH.png");
-	texture_map[W3] = Texture("./res/HH.png");
+	texture_map[W3] = Texture("./res/SS.png");
 	texture_map[W4] = Texture("./res/HH.png");
 	texture_map[W5] = Texture("./res/HH.png");
 

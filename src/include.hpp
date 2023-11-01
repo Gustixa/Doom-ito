@@ -114,3 +114,9 @@ inline float distancePlainToPoint(const vec4& plane, const vec3& point) {
 	float denominator = sqrt(plane.x * plane.x + plane.y * plane.y + plane.z * plane.z);
 	return numerator / denominator;
 }
+
+inline float mapRange(float value, float a, float b, float c, float d) {
+	value = std::min(std::max(value, a), b);
+	float mappedValue = (value - a) / (b - a) * (d - c) + c;
+	return mappedValue;
+}
