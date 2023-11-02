@@ -4,19 +4,25 @@
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* frame_buffer = nullptr;
+uint32_t* pixel_buffer = nullptr;
 
 array<bool, 9> input = array<bool, 9>();
 
-const float WALK_SPEED = 50.0f;
-const float SPRINT_SPEED = WALK_SPEED * 2.0f;
-const float TURN_SPEED = 40.0f;
+const float WALK_SPEED = 80.0f;
+const float SPRINT_SPEED = WALK_SPEED * 2.4f;
+const float TURN_SPEED = 75.0f;
 
 const uint16_t WIDTH = 16;
 const uint16_t HEIGHT = 11;
-const uint16_t BLOCK = 50;
+const uint16_t BLOCK = 60;
 const uint16_t RESX = WIDTH * BLOCK;
 const uint16_t RESY = HEIGHT * BLOCK;
 
+const uint16_t QUART_RESX = RESX / 4;
+const uint16_t QUART_RESY = RESY / 4;
+const uint16_t QUART_BLOCK = BLOCK / 4;
+
+const uint16_t HALF_RESX = RESX / 2;
 const uint16_t HALF_RESY = RESY / 2;
 const uint16_t HALF_BLOCK = BLOCK / 2;
 
@@ -42,7 +48,7 @@ vector<vector<string>> player_map = {
 	{ W3, OO, OO, OO, OO, OO, OO, OO, OO, W3, OO, OO, OO, OO, OO, W5 },
 	{ W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W4, W4, W1 }
 };
-vec2  player_pos = vec2(BLOCK + HALF_BLOCK);
+vec2 player_pos = vec2(BLOCK + HALF_BLOCK);
 map<string, Texture> texture_map;
 
 void init() {
@@ -52,33 +58,32 @@ void init() {
 	frame_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 }
 
-void renderPixel(uint32_t* pixel_buffer, const uint32_t& x, const uint32_t& y, const uint32_t& i_color) {
+void renderPixel(const uint32_t& x, const uint32_t& y, const uint32_t& i_color) {
 	if (y >= 0 && y < RESY && x >= 0 && x < RESX)
 		pixel_buffer[y * RESX + x] = i_color;
 }
 
-void renderMinimap(uint32_t* pixel_buffer, const int& x, const int& y, const string& mapHit) {
-	for (int cx = x; cx < x + BLOCK; cx++) {
-		for (int cy = y; cy < y + BLOCK; cy++) {
-			float tx = (float(cx - x) ) / float(BLOCK);
-			float ty = (float(cy - y) ) / float(BLOCK);
+void renderMinimap(const int& x, const int& y, const string& mapHit) {
+	for (int cx = x; cx < x + QUART_BLOCK; cx++) {
+		for (int cy = y; cy < y + QUART_BLOCK; cy++) {
+			float tx = (float(cx - x) ) / float(QUART_BLOCK);
+			float ty = (float(cy - y) ) / float(QUART_BLOCK);
 
 			vec3 c = texture_map[mapHit].getColor(tx, ty);
-			renderPixel(pixel_buffer, cx, cy, rgba(c.r, c.g, c.b));
+			renderPixel(cx + RESX - QUART_RESX, cy + RESY - QUART_RESY, rgba(c.r, c.g, c.b));
 		}
 	}
 }
 
-void renderLine(uint32_t* pixel_buffer, const int& x, const float& h, const string& i_mapHit, const int& i_screen_x) {
+void renderLine(const int& x, const float& h, const string& i_mapHit, const int& i_screen_x) {
 	float start = HALF_RESY - h / 2.0f;
 	float end = start + h;
 
 	for (int y = start; y < end; y++) {
-		const float x_coords = float(i_screen_x) / float(HALF_RESY) * 5.6f;
-		const float y_coords = mapRange(y, start, end, 0.f, 1.f);
+		const float x_coords = float(i_screen_x) / float(HALF_RESX) * 8.0;
+		const float y_coords = mapRange(static_cast<float>(y), start, end, 0.f, 1.f);
 		uvec4 c = texture_map[i_mapHit].getColor(x_coords, y_coords);
-		renderPixel(pixel_buffer, RESX - x, y, rgba(c.r,c.g,c.b));
-
+		renderPixel(RESX - x, y, rgba(c.r,c.g,c.b));
 	}
 }
 
@@ -98,7 +103,7 @@ void movePlayer(const int& i_fwd, const int& i_side) {
 	}
 }
 
-tuple<float, string, int> rayCast(uint32_t* pixel_buffer, const float& i_angle) {
+tuple<float, string, int> rayCast(const float& i_angle) {
 	float d = 0;
 	string mapHit;
 	int tx;
@@ -125,9 +130,7 @@ tuple<float, string, int> rayCast(uint32_t* pixel_buffer, const float& i_angle) 
 			tx = maxhit;
 			break;
 		}
-
-		//renderPixel(x, y, rgba(255,255,255));
-
+		renderPixel(mapRange(x, 0, RESX, RESX - QUART_RESX, RESX), mapRange(y, 0, RESY, RESY - QUART_RESY, RESY), rgba(255,255,255));
 		d += 1;
 	}
 	return make_tuple( d, mapHit, tx );
@@ -157,21 +160,32 @@ void render() {
 	if (input[KEY_R_ARROW]) player_angle += TURN_SPEED * delta_time;
 
 	int32_t pitch = 0;
-	uint32_t* pixel_buffer = nullptr;
 
 	// Lock the memory in order to write our Back Buffer image to it
 	if (!SDL_LockTexture(frame_buffer, NULL, (void**)&pixel_buffer, &pitch)) {
 		pitch /= sizeof(uint32_t);
 
-		// render clear
+		// render Clear
 		for (uint32_t i = 0; i < RESX * RESY; i++)
 			pixel_buffer[i] = rgba(0,0,0);
+		// render Walls
+		for (int x = 0; x < RESX; x++) {
+			float a = player_angle + 30.0f - 60.0f * x / RESX;
+			auto [dist, mapHit, tx] = rayCast(a);
+			uvec4 c = uvec4(255, 0, 0, 255);
+			if (dist <= 0.01) {
+				cout << "you lose";
+				player_pos = vec2(BLOCK + HALF_BLOCK);
+			}
+			float h = static_cast<float>(RESY) / dist * static_cast<float>(BLOCK);
+			renderLine(x, h, mapHit, tx);
+		}
 
 		// render Minimap
-		/*for (int x = 0; x < RESX; x += BLOCK) {
-			for (int y = 0; y < RESY; y += BLOCK) {
-				int i = static_cast<int>(x / BLOCK);
-				int j = static_cast<int>(y / BLOCK);
+		for (int x = 0; x < QUART_RESX; x += QUART_BLOCK) {
+			for (int y = 0; y < QUART_RESY; y += QUART_BLOCK) {
+				int i = static_cast<int>(x / QUART_BLOCK);
+				int j = static_cast<int>(y / QUART_BLOCK);
 				if (player_map[j][i] != " ") {
 					string mapHit;
 					mapHit = player_map[j][i];
@@ -179,21 +193,7 @@ void render() {
 					renderMinimap(x, y, mapHit);
 				}
 			}
-		}*/
-		// render Walls
-		for (int x = 0; x < RESX; x++) {
-			float a = player_angle + 30.0f - 60.0f * x / RESX;
-			auto [dist, mapHit, tx] = rayCast(pixel_buffer, a);
-			uvec4 c = uvec4(255, 0, 0, 255);
-			if (dist <= 0.01) {
-				cout << "you lose";
-				player_pos = vec2(BLOCK + HALF_BLOCK);
-			}
-			float h = static_cast<float>(RESY) / dist * 50.0f;
-			renderLine(pixel_buffer, x, h, mapHit, tx);
 		}
-
-		// render end
 
 		SDL_UnlockTexture(frame_buffer);
 		SDL_RenderCopy(renderer, frame_buffer, NULL, NULL);

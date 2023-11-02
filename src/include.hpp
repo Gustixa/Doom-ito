@@ -124,3 +124,9 @@ inline float mapRange(float value, float a, float b, float c, float d) {
 	float mappedValue = (value - a) / (b - a) * (d - c) + c;
 	return mappedValue;
 }
+
+inline int mapRange(int value, int a, int b, int c, int d) {
+	value = std::min(std::max(value, a), b);
+	int mappedValue = static_cast<int>(static_cast<float>(value - a) / static_cast<float>(b - a) * static_cast<float>(d - c) + c);
+	return mappedValue;
+}
