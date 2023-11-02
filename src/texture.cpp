@@ -29,7 +29,7 @@ void Texture::loadImage(const char* imagePath) {
 			int offset = (y * width + x) * 4;
 
 			uvec4 pixel(
-				image_data[offset],
+				image_data[offset + 0],
 				image_data[offset + 1],
 				image_data[offset + 2],
 				image_data[offset + 3]

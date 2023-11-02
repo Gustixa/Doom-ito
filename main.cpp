@@ -6,6 +6,8 @@ SDL_Renderer* renderer = nullptr;
 SDL_Texture* frame_buffer = nullptr;
 uint32_t* pixel_buffer = nullptr;
 
+int fire_animation = 0;
+
 array<bool, 9> input = array<bool, 9>();
 
 const float WALK_SPEED = 80.0f;
@@ -32,6 +34,7 @@ double delta_time = 0;
 double run_time = 0;
 clock_t last_time = 0;
 clock_t current_time = 0;
+double animation_time = 0.0f;
 
 float player_angle = 0.0f;
 
@@ -56,7 +59,7 @@ void init() {
 	SDL_Init(SDL_INIT_VIDEO);
 	window = SDL_CreateWindow("Samuel | 60.00 FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESX, RESY, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	frame_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
+	frame_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
 }
 
 void renderPixel(const uint32_t& x, const uint32_t& y, const uint32_t& i_color) {
@@ -88,6 +91,49 @@ void renderLine(const int& x, const float& h, const string& i_mapHit, const int&
 	}
 }
 
+void renderShotgun() {
+	if (animation_time >= 0.0)
+		animation_time -= delta_time;
+
+	if (inRange(animation_time, 0.6, 1.20))
+		fire_animation = 6;
+	if (inRange(animation_time, 0.5, 0.6))
+		fire_animation = 5;
+	if (inRange(animation_time, 0.4, 0.5))
+		fire_animation = 4;
+	if (inRange(animation_time, 0.3, 0.4))
+		fire_animation = 3;
+	if (inRange(animation_time, 0.2, 0.3))
+		fire_animation = 2;
+	if (inRange(animation_time, 0.1, 0.2))
+		fire_animation = 1;
+	if (inRange(animation_time,-1.0, 0.1))
+		fire_animation = 0;
+
+	uvec4 c = uvec4(255, 0, 255, 255);
+	for (int x = 0; x < 320; x++) {
+		for (int y = 0; y < 320; y++) {
+			float x_coord = static_cast<float>(x) / 320.f;
+			float y_coord = static_cast<float>(y) / 320.f;
+
+			if (fire_animation == 6)  c = texture_map["Shotgun Fire A"  ].getColor(x_coord, y_coord);
+			if (fire_animation == 5)  c = texture_map["Shotgun Reload A"].getColor(x_coord, y_coord);
+			if (fire_animation == 4)  c = texture_map["Shotgun Reload B"].getColor(x_coord, y_coord);
+			if (fire_animation == 3)  c = texture_map["Shotgun Reload C"].getColor(x_coord, y_coord);
+			if (fire_animation == 2)  c = texture_map["Shotgun Reload B"].getColor(x_coord, y_coord);
+			if (fire_animation == 1)  c = texture_map["Shotgun Reload A"].getColor(x_coord, y_coord);
+			if (fire_animation == 0)  c = texture_map["Shotgun Rest"    ].getColor(x_coord, y_coord);
+			if (c.a != 0) renderPixel(x + QUART_RESX, y + RESY - 320, rgba(c.r, c.g, c.b));
+		}
+	}
+}
+
+void shoot() {
+	if (fire_animation == 0) {
+		fire_animation = 6;
+		animation_time = 0.71;
+	}
+}
 
 void movePlayer(const int& i_fwd, const int& i_side) {
 	if (input[KEY_SHIFT]) {
@@ -194,6 +240,9 @@ void render() {
 				}
 			}
 		}
+		// render Shotty
+		renderShotgun();
+
 		last_player_pos = player_pos;
 
 		SDL_UnlockTexture(frame_buffer);
@@ -213,6 +262,13 @@ int main(int argc, char* argv[]) {
 	texture_map[W4] = Texture("./res/Cacodemon.png");
 	texture_map[W5] = Texture("./res/HH.png");
 
+	texture_map["Shotgun Rest"]     = Texture("./res/Shotgun Rest.png");
+	texture_map["Shotgun Reload A"] = Texture("./res/Shotgun Reload A.png");
+	texture_map["Shotgun Reload B"] = Texture("./res/Shotgun Reload B.png");
+	texture_map["Shotgun Reload C"] = Texture("./res/Shotgun Reload C.png");
+	texture_map["Shotgun Fire A"]   = Texture("./res/Shotgun Fire A.png");
+	texture_map["Shotgun Fire B"]   = Texture("./res/Shotgun Fire B.png");
+
 	while (running) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -225,6 +281,11 @@ int main(int argc, char* argv[]) {
 				if (event.key.keysym.sym == SDLK_ESCAPE) {
 					SDL_Quit();
 					return 0;
+				}
+			}
+			if (event.type == SDL_KEYDOWN) {
+				if (event.key.keysym.sym == SDLK_SPACE) {
+					shoot();
 				}
 			}
 		}

@@ -155,6 +155,12 @@
     <Image Include="res\Floor.png" />
     <Image Include="res\HH.png" />
     <Image Include="res\Map.png" />
+    <Image Include="res\Shotgun Fire A.png" />
+    <Image Include="res\Shotgun Fire B.png" />
+    <Image Include="res\Shotgun Reload A.png" />
+    <Image Include="res\Shotgun Reload B.png" />
+    <Image Include="res\Shotgun Reload C.png" />
+    <Image Include="res\Shotgun Rest.png" />
     <Image Include="res\SS.png" />
     <Image Include="res\Wall.png" />
   </ItemGroup>

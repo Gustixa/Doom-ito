@@ -58,5 +58,23 @@
     <Image Include="res\SS.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\Shotgun Fire B.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Shotgun Reload A.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Shotgun Reload B.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Shotgun Reload C.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Shotgun Rest.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Shotgun Fire A.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

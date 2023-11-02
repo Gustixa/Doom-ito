@@ -63,12 +63,11 @@ enum Keys {
 	KEY_D,
 	KEY_L_ARROW,
 	KEY_R_ARROW,
-	KEY_SPACE,
 	KEY_SHIFT
 };
 
 inline uint32_t rgba(const uint8_t& red, const uint8_t& green, const uint8_t& blue, const uint8_t& alpha = 255) {
-	return (red << 24) | (green << 16) | (blue << 8) | alpha;
+	return (alpha << 24) | (red << 16) | (green << 8) | blue;
 }
 
 inline Keys getKey(const SDL_Keycode& key) {
@@ -79,7 +78,6 @@ inline Keys getKey(const SDL_Keycode& key) {
 		case SDLK_d: return Keys::KEY_D;
 		case SDLK_LEFT :  return Keys::KEY_L_ARROW;
 		case SDLK_RIGHT:  return Keys::KEY_R_ARROW;
-		case SDLK_SPACE:  return Keys::KEY_SPACE;
 		case SDLK_LSHIFT: return Keys::KEY_SHIFT;
 		default: return Keys::NONE;
 	};
@@ -129,4 +127,9 @@ inline int mapRange(int value, int a, int b, int c, int d) {
 	value = std::min(std::max(value, a), b);
 	int mappedValue = static_cast<int>(static_cast<float>(value - a) / static_cast<float>(b - a) * static_cast<float>(d - c) + c);
 	return mappedValue;
+}
+
+inline bool inRange(double value, double a, double b) {
+	if (value > a && value <= b) return true;
+	return false;
 }
