@@ -67,6 +67,10 @@ enum Keys {
 	KEY_SHIFT
 };
 
+inline uint32_t rgba(const uint8_t& red, const uint8_t& green, const uint8_t& blue, const uint8_t& alpha = 255) {
+	return (red << 24) | (green << 16) | (blue << 8) | alpha;
+}
+
 inline Keys getKey(const SDL_Keycode& key) {
 		switch (key) {
 		case SDLK_w: return Keys::KEY_W;
