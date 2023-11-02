@@ -48,6 +48,7 @@ vector<vector<string>> player_map = {
 	{ W3, OO, OO, OO, OO, OO, OO, OO, OO, W3, OO, OO, OO, OO, OO, W5 },
 	{ W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W2, W2, W1, W4, W4, W1 }
 };
+vec2 last_player_pos = vec2(BLOCK + HALF_BLOCK);
 vec2 player_pos = vec2(BLOCK + HALF_BLOCK);
 map<string, Texture> texture_map;
 
@@ -173,9 +174,8 @@ void render() {
 			float a = player_angle + 30.0f - 60.0f * x / RESX;
 			auto [dist, mapHit, tx] = rayCast(a);
 			uvec4 c = uvec4(255, 0, 0, 255);
-			if (dist <= 0.01) {
-				cout << "you lose";
-				player_pos = vec2(BLOCK + HALF_BLOCK);
+			if (dist <= 2.5) {
+				player_pos = last_player_pos;
 			}
 			float h = static_cast<float>(RESY) / dist * static_cast<float>(BLOCK);
 			renderLine(x, h, mapHit, tx);
@@ -194,6 +194,7 @@ void render() {
 				}
 			}
 		}
+		last_player_pos = player_pos;
 
 		SDL_UnlockTexture(frame_buffer);
 		SDL_RenderCopy(renderer, frame_buffer, NULL, NULL);
