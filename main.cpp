@@ -6,13 +6,18 @@ SDL_Renderer* renderer = nullptr;
 SDL_Texture* frame_buffer = nullptr;
 uint32_t* pixel_buffer = nullptr;
 
+sf::Music music;
+sf::SoundBuffer buffer;
+sf::Sound sound;
+
+
 int fire_animation = 0;
 
 array<bool, 9> input = array<bool, 9>();
 
 const float WALK_SPEED = 80.0f;
 const float SPRINT_SPEED = WALK_SPEED * 2.4f;
-const float TURN_SPEED = 75.0f;
+const float TURN_SPEED = 120.0f;
 
 const uint16_t WIDTH = 16;
 const uint16_t HEIGHT = 11;
@@ -60,6 +65,12 @@ void init() {
 	window = SDL_CreateWindow("Samuel | 60.00 FPS", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, RESX, RESY, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	frame_buffer = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, RESX, RESY);
+
+	music.openFromFile("./res/Deutsch.ogg");
+	music.setLoop(true);
+	music.play();
+	buffer.loadFromFile("./res/Shot.wav");
+	sound.setBuffer(buffer);
 }
 
 void renderPixel(const uint32_t& x, const uint32_t& y, const uint32_t& i_color) {
@@ -132,6 +143,7 @@ void shoot() {
 	if (fire_animation == 0) {
 		fire_animation = 6;
 		animation_time = 0.71;
+		sound.play();
 	}
 }
 

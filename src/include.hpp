@@ -28,6 +28,7 @@
 
 #include <SDL.h>
 #include <SDL_render.h>
+#include <SFML/Audio.hpp>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -81,40 +82,6 @@ inline Keys getKey(const SDL_Keycode& key) {
 		case SDLK_LSHIFT: return Keys::KEY_SHIFT;
 		default: return Keys::NONE;
 	};
-}
-
-inline mat4 mulmat4(mat4 a, mat4 b) {
-	mat4 Result = mat4();
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			for (int k = 0; k < 4; ++k) {
-				Result[i][j] += a[i][k] * b[k][j];
-			}
-		}
-	}
-	return Result;
-}
-
-inline vec3 triangleNormal(const vec3& v1, const vec3& v2, const vec3& v3) {
-	return normalize(cross(v3 - v1, v2 - v1));
-}
-
-inline void rotateAroundAnchor(vec3& position, const vec3& anchor, vec3 angle) {
-	mat4 translation = translate(mat4(1.0f), anchor);
-	mat4 rotationX = rotate(mat4(1.0f), angle.x, vec3(1.0f, 0.0f, 0.0f));
-	mat4 rotationY = rotate(mat4(1.0f), angle.y, vec3(0.0f, 1.0f, 0.0f));
-	mat4 rotationZ = rotate(mat4(1.0f), angle.z, vec3(0.0f, 0.0f, 1.0f));
-	mat4 rotation = rotationX * rotationY * rotationZ;
-	mat4 invTranslation = translate(mat4(1.0f), -anchor);
-	vec4 new_pos = vec4(position, 1.0f);
-	new_pos = translation * rotation * invTranslation * new_pos;
-	position = vec3(new_pos);
-}
-
-inline float distancePlainToPoint(const vec4& plane, const vec3& point) {
-	float numerator = abs(plane.x * point.x + plane.y * point.y + plane.z * point.z + plane.w);
-	float denominator = sqrt(plane.x * plane.x + plane.y * plane.y + plane.z * plane.z);
-	return numerator / denominator;
 }
 
 inline float mapRange(float value, float a, float b, float c, float d) {

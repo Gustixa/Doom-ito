@@ -34,7 +34,6 @@ void Texture::loadImage(const char* imagePath) {
 				image_data[offset + 2],
 				image_data[offset + 3]
 			);
-
 			row.push_back(pixel);
 		}
 		result.push_back(row);
